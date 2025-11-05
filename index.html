@@ -1,0 +1,1320 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Maintenance Weekly Report</title>
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+<style>
+/* original CSS (kept) */
+body { font-family:'Segoe UI',Arial,sans-serif; background:#fffef6; margin:0; padding:0; }
+.header { background: linear-gradient(90deg,#fdd835,#ffee58); color:#333; padding:15px 25px;
+         display:flex; justify-content:space-between; align-items:center; box-shadow:0 2px 6px rgba(0,0,0,0.15); }
+.header h1 { margin:0; font-size:22px; font-weight:700; }
+.tabs { background:#fffde7; padding:8px 15px; border-bottom:1px solid #f0e68c; text-align:center; }
+.tab-btn { border:none; background:transparent; font-weight:600; padding:8px 14px; margin-right:6px; border-radius:5px; transition: all 0.2s; color:#795548; }
+.tab-btn.active,.tab-btn:hover { background:#fdd835; color:#000; box-shadow:0 2px 4px rgba(0,0,0,0.15); }
+.container-fluid { padding:20px 25px; }
+.dash-box { border:2px solid #fdd835; border-radius:12px; background:#fff; box-shadow:0 2px 6px rgba(0,0,0,0.1); padding:15px 20px; height:100%; }
+.summary-table { font-size:13px; width:100%; text-align:center; border-collapse: collapse; margin-bottom:10px; }
+.summary-table th,.summary-table td { border:1px solid #ddd; padding:4px; }
+.summary-table th { background:#fffde7; font-weight:600; }
+.table-wrapper {
+  max-height: 70vh;
+  overflow-y: auto;
+  border: 1px solid #f0e68c;
+  border-radius: 10px;
+  background: #fff;
+}
+
+/* Giữ layout bảng ổn định khi scroll */
+.table-wrapper table {
+  table-layout: fixed;
+  min-width: 800px;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+/* Căn ô đều, không để dữ liệu chồng header */
+.table-wrapper td, .table-wrapper th {
+  border: 1px solid #ddd;
+  padding: 4px;
+  white-space: break-word;
+  vertical-align: top;
+}
+
+/* Hình ảnh trong bảng */
+.table-wrapper img.img-thumb {
+  display: inline-block;  /* thay cho block */
+  margin: 0 auto;         /* căn giữa ngang */
+  border-radius: 6px;
+  transition: transform 0.2s;
+  cursor: pointer;
+  max-width: 100px;
+  height: auto;
+}
+.table-wrapper img.img-thumb:hover {
+  transform: scale(1.8);
+  transform-origin: center center;
+  z-index: 5;
+  position: relative;
+}
+
+/* Header cố định đúng vị trí khi scroll */
+.table-wrapper thead th {
+  position: sticky;
+  top: 0;
+  background: #fdf3b7;
+  z-index: 5;
+  text-align: center;
+  border-bottom: 2px solid #ddd;
+}
+
+.table tbody tr:hover { background:#fffde7; }
+.chart-row { display:flex; justify-content:space-between; gap:8px; margin-top:10px; }
+.chart-col { flex:1 1 48%; border-radius:10px; background:#fff; padding:4px; min-height:280px; overflow:hidden; text-align:center; display:flex; flex-direction:column; justify-content:center; align-items:center; }
+.table-pair { display:flex; gap:10px; margin-top:10px; }
+.table-half { flex:1; }
+.table-half h6 { font-weight:600; text-align:center; margin-bottom:4px; }
+.dash-box h4 { text-align: center; font-weight: 700; margin-bottom: 12px; }
+
+/* SAFE OVERRIDES to prevent bootstrap from breaking layout */
+.table.table-sm.table-bordered.align-middle {
+  border-collapse: collapse;
+  width: 100%;
+  table-layout: fixed;
+}
+.table.table-sm.table-bordered.align-middle thead th {
+  background:#fdf3b7 !important;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+.table.table-sm.table-bordered.align-middle td,
+.table.table-sm.table-bordered.align-middle th {
+  border:1px solid #ddd;
+  padding:4px;
+  vertical-align: top;
+  white-space: break-word;
+}
+.table.table-sm.table-bordered.align-middle img.img-thumb {
+  width:100px;
+  border-radius:6px;
+}
+</style>
+</head>
+<body>
+<div class="header">
+  <div>
+    <h1>Maintenance Weekly Report</h1>
+    <small>Generated: 05/11/2025 04:40</small>
+  </div>
+  <img src="https://drive.google.com/thumbnail?id=1EbBpSYDVFfWrJHiz3ZWdsfGOYZGvYT-I&sz=w1000" alt="Logo" height="60">
+</div>
+<div class="tabs">
+  <button class="tab-btn active" onclick="showTab('dashboard', this)">Dashboard</button>
+  <button class="tab-btn" onclick="showTab('electrical', this)">Electrical</button>
+  <button class="tab-btn" onclick="showTab('mechanical', this)">Mechanical</button>
+</div>
+<div class="container-fluid">
+
+<!-- small week selector (JS will populate) -->
+<div style="text-align:right; margin-bottom:8px;">
+  <label style="font-weight:600;">Chọn tuần:</label>
+  <select id="weekSelect" onchange="onWeekChange()"><option value="ALL">Tất cả</option></select>
+</div>
+
+<!-- =============== DASHBOARD =============== -->
+<div id="dashboard" style="display:block;">
+
+  <div class="row g-3">
+
+    <!-- Electrical -->
+    <div class="col-lg-6">
+      <div class="dash-box">
+        <h4>⚡ Electrical</h4>
+
+        <div class="table-pair" style="display:flex; gap:10px;">
+          <div style="flex:1;">
+            <h6 style="text-align:center; font-weight:600;">Các công việc thực hiện</h6>
+            <!-- KPI table with ID -->
+            <table id="kpi_e_table" class="summary-table">
+              <thead>
+                <tr><th>Trạng thái</th><th>Số lượng</th><th>Tỷ lệ</th></tr>
+              </thead>
+              <tbody>
+                
+                <tr><td>Hoàn thành</td><td>25</td><td>86.2%</td></tr>
+                
+                <tr><td>Đang theo dõi</td><td>3</td><td>10.3%</td></tr>
+                
+                <tr><td>Chưa hoàn thành</td><td>1</td><td>3.4%</td></tr>
+                
+                <tr><td><b>Tổng</b></td><td colspan="2"><b>29</b></td></tr>
+              </tbody>
+            </table>
+          </div>
+
+        <div style="flex:1;">
+            <h6 style="text-align:center; font-weight:600;">Issue theo khu vực</h6>
+            <!-- Issue container with ID -->
+            <div id="issue_e"><table class='summary-table'><tr><th>Khu vực</th><th>Số lượng</th><th>Tồn đọng</th></tr><tr><td>Energy Plant</td><td>3</td><td>0</td></tr><tr><td>Press</td><td>16</td><td>0</td></tr><tr><td>Refiner</td><td>1</td><td style='color:red;font-weight:600;'>1</td></tr><tr><td>Sanding</td><td>2</td><td>0</td></tr><tr><td>Woodroom</td><td>7</td><td style='color:red;font-weight:600;'>1</td></tr><tr><td><b>Tổng</b></td><td><b>29</b></td><td><b style='color:red'>2</b></td></tr></table></div>
+          </div>
+        </div>
+
+        <div class="chart-row">
+          <div class="chart-col"><div id="pie_e_div"><div>                            <div id="b527d8b6-88d5-497c-98e9-9bfd2a8dbef0" class="plotly-graph-div" style="height:260px; width:280px;"></div>            <script type="text/javascript">                                    window.PLOTLYENV=window.PLOTLYENV || {};                                    if (document.getElementById("b527d8b6-88d5-497c-98e9-9bfd2a8dbef0")) {                    Plotly.newPlot(                        "b527d8b6-88d5-497c-98e9-9bfd2a8dbef0",                        [{"domain":{"x":[0.0,1.0],"y":[0.0,1.0]},"hole":0.4,"hovertemplate":"status=%{label}\u003cbr\u003ecount=%{value}\u003cextra\u003e\u003c\u002fextra\u003e","labels":["Hoàn thành","Đang theo dõi","Chưa hoàn thành"],"legendgroup":"","name":"","showlegend":true,"values":[25,3,1],"type":"pie","textfont":{"size":12},"textinfo":"label+percent","textposition":"inside"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmapgl":[{"type":"heatmapgl","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"}}},"legend":{"tracegroupgap":0,"orientation":"h","y":-0.25,"x":0.5,"xanchor":"center"},"title":{"text":"\u003cb\u003eTrạng thái công việc\u003c\u002fb\u003e","x":0.5},"piecolorway":["rgb(141,211,199)","rgb(255,255,179)","rgb(190,186,218)","rgb(251,128,114)","rgb(128,177,211)","rgb(253,180,98)","rgb(179,222,105)","rgb(252,205,229)","rgb(217,217,217)","rgb(188,128,189)","rgb(204,235,197)","rgb(255,237,111)"],"height":260,"width":280,"margin":{"t":30,"b":10,"l":10,"r":10}},                        {"responsive": true}                    )                };                            </script>        </div></div></div>
+          <div class="chart-col"><div id="bar_e_div"><div>                            <div id="fcee87e4-b502-4235-a2c5-60131aba458d" class="plotly-graph-div" style="height:260px; width:380px;"></div>            <script type="text/javascript">                                    window.PLOTLYENV=window.PLOTLYENV || {};                                    if (document.getElementById("fcee87e4-b502-4235-a2c5-60131aba458d")) {                    Plotly.newPlot(                        "fcee87e4-b502-4235-a2c5-60131aba458d",                        [{"alignmentgroup":"True","hovertemplate":"Loai=Tồn đọng\u003cbr\u003eGiaTri=%{x}\u003cbr\u003eKhuVuc=%{y}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"Tồn đọng","marker":{"color":"#636efa","pattern":{"shape":""}},"name":"Tồn đọng","offsetgroup":"Tồn đọng","orientation":"h","showlegend":true,"textposition":"outside","x":[0,0,1,0,1],"xaxis":"x","y":["Energy Plant","Press","Refiner","Sanding","Woodroom"],"yaxis":"y","type":"bar","textfont":{"color":"black","size":12},"textangle":0,"texttemplate":"\u003cb\u003e%{x}\u003c\u002fb\u003e"},{"alignmentgroup":"True","hovertemplate":"Loai=Số lượng\u003cbr\u003eGiaTri=%{x}\u003cbr\u003eKhuVuc=%{y}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"Số lượng","marker":{"color":"#EF553B","pattern":{"shape":""}},"name":"Số lượng","offsetgroup":"Số lượng","orientation":"h","showlegend":true,"textposition":"outside","x":[3,16,1,2,7],"xaxis":"x","y":["Energy Plant","Press","Refiner","Sanding","Woodroom"],"yaxis":"y","type":"bar","textfont":{"color":"black","size":12},"textangle":0,"texttemplate":"\u003cb\u003e%{x}\u003c\u002fb\u003e"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmapgl":[{"type":"heatmapgl","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"}}},"xaxis":{"anchor":"y","domain":[0.0,1.0],"title":{},"showgrid":true,"gridcolor":"rgba(230,230,230,0.6)"},"yaxis":{"anchor":"x","domain":[0.0,1.0],"title":{},"categoryorder":"array","categoryarray":["Refiner","Sanding","Energy Plant","Woodroom","Press"],"tickfont":{"size":10}},"legend":{"title":{"text":"Loai"},"tracegroupgap":0,"orientation":"h","y":-0.25,"x":0.5,"xanchor":"center"},"title":{"text":"\u003cb\u003eIssue thiết bị\u003c\u002fb\u003e","x":0.5},"barmode":"group","height":260,"width":380,"margin":{"t":40,"b":30,"l":100,"r":70},"plot_bgcolor":"white","paper_bgcolor":"white","bargap":0.35},                        {"responsive": true}                    )                };                            </script>        </div></div></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Mechanical -->
+    <div class="col-lg-6">
+      <div class="dash-box">
+        <h4>⚙️ Mechanical</h4>
+
+        <div class="table-pair" style="display:flex; gap:10px;">
+          <div style="flex:1;">
+            <h6 style="text-align:center; font-weight:600;">Các công việc thực hiện</h6>
+            <!-- KPI table with ID -->
+            <table id="kpi_m_table" class="summary-table">
+            <thead>
+              <tr><th>Trạng thái</th><th>Số lượng</th><th>Tỷ lệ</th></tr>
+            </thead>
+            <tbody>
+              
+              <tr><td>Hoàn thành</td><td>14</td><td>66.7%</td></tr>
+              
+              <tr><td>Đang theo dõi</td><td>6</td><td>28.6%</td></tr>
+              
+              <tr><td>Chưa hoàn thành</td><td>1</td><td>4.8%</td></tr>
+              
+              <tr><td><b>Tổng</b></td><td colspan="2"><b>21</b></td></tr>
+            </tbody>
+          </table>
+          </div>
+
+          <div style="flex:1;">
+            <h6 style="text-align:center; font-weight:600;">Issue theo khu vực</h6>
+            <!-- Issue container with ID -->
+            <div id="issue_m"><table class='summary-table'><tr><th>Khu vực</th><th>Số lượng</th><th>Tồn đọng</th></tr><tr><td>Energy Plant</td><td>5</td><td style='color:red;font-weight:600;'>2</td></tr><tr><td>Nhà máy keo</td><td>2</td><td style='color:red;font-weight:600;'>2</td></tr><tr><td>Phụ trợ</td><td>1</td><td>0</td></tr><tr><td>Press</td><td>1</td><td>0</td></tr><tr><td>Refiner</td><td>4</td><td style='color:red;font-weight:600;'>2</td></tr><tr><td>Woodroom</td><td>8</td><td style='color:red;font-weight:600;'>2</td></tr><tr><td><b>Tổng</b></td><td><b>21</b></td><td><b style='color:red'>8</b></td></tr></table></div>
+          </div>
+        </div>
+
+        <div class="chart-row">
+          <div class="chart-col"><div id="pie_m_div"><div>                            <div id="06dbe424-3cdb-4b83-ac00-9cc3144aa944" class="plotly-graph-div" style="height:260px; width:280px;"></div>            <script type="text/javascript">                                    window.PLOTLYENV=window.PLOTLYENV || {};                                    if (document.getElementById("06dbe424-3cdb-4b83-ac00-9cc3144aa944")) {                    Plotly.newPlot(                        "06dbe424-3cdb-4b83-ac00-9cc3144aa944",                        [{"domain":{"x":[0.0,1.0],"y":[0.0,1.0]},"hole":0.4,"hovertemplate":"status=%{label}\u003cbr\u003ecount=%{value}\u003cextra\u003e\u003c\u002fextra\u003e","labels":["Hoàn thành","Đang theo dõi","Chưa hoàn thành"],"legendgroup":"","name":"","showlegend":true,"values":[14,6,1],"type":"pie","textfont":{"size":12},"textinfo":"label+percent","textposition":"inside"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmapgl":[{"type":"heatmapgl","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"}}},"legend":{"tracegroupgap":0,"orientation":"h","y":-0.25,"x":0.5,"xanchor":"center"},"title":{"text":"\u003cb\u003eTrạng thái công việc\u003c\u002fb\u003e","x":0.5},"piecolorway":["rgb(141,211,199)","rgb(255,255,179)","rgb(190,186,218)","rgb(251,128,114)","rgb(128,177,211)","rgb(253,180,98)","rgb(179,222,105)","rgb(252,205,229)","rgb(217,217,217)","rgb(188,128,189)","rgb(204,235,197)","rgb(255,237,111)"],"height":260,"width":280,"margin":{"t":30,"b":10,"l":10,"r":10}},                        {"responsive": true}                    )                };                            </script>        </div></div></div>
+          <div class="chart-col"><div id="bar_m_div"><div>                            <div id="5fdc1a91-9edb-46e1-a493-c245f2c0114b" class="plotly-graph-div" style="height:260px; width:380px;"></div>            <script type="text/javascript">                                    window.PLOTLYENV=window.PLOTLYENV || {};                                    if (document.getElementById("5fdc1a91-9edb-46e1-a493-c245f2c0114b")) {                    Plotly.newPlot(                        "5fdc1a91-9edb-46e1-a493-c245f2c0114b",                        [{"alignmentgroup":"True","hovertemplate":"Loai=Tồn đọng\u003cbr\u003eGiaTri=%{x}\u003cbr\u003eKhuVuc=%{y}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"Tồn đọng","marker":{"color":"#636efa","pattern":{"shape":""}},"name":"Tồn đọng","offsetgroup":"Tồn đọng","orientation":"h","showlegend":true,"textposition":"outside","x":[2,2,0,0,2,2],"xaxis":"x","y":["Energy Plant","Nhà máy keo","Phụ trợ","Press","Refiner","Woodroom"],"yaxis":"y","type":"bar","textfont":{"color":"black","size":12},"textangle":0,"texttemplate":"\u003cb\u003e%{x}\u003c\u002fb\u003e"},{"alignmentgroup":"True","hovertemplate":"Loai=Số lượng\u003cbr\u003eGiaTri=%{x}\u003cbr\u003eKhuVuc=%{y}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"Số lượng","marker":{"color":"#EF553B","pattern":{"shape":""}},"name":"Số lượng","offsetgroup":"Số lượng","orientation":"h","showlegend":true,"textposition":"outside","x":[5,2,1,1,4,8],"xaxis":"x","y":["Energy Plant","Nhà máy keo","Phụ trợ","Press","Refiner","Woodroom"],"yaxis":"y","type":"bar","textfont":{"color":"black","size":12},"textangle":0,"texttemplate":"\u003cb\u003e%{x}\u003c\u002fb\u003e"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmapgl":[{"type":"heatmapgl","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"}}},"xaxis":{"anchor":"y","domain":[0.0,1.0],"title":{},"showgrid":true,"gridcolor":"rgba(230,230,230,0.6)"},"yaxis":{"anchor":"x","domain":[0.0,1.0],"title":{},"categoryorder":"array","categoryarray":["Press","Phụ trợ","Nhà máy keo","Refiner","Energy Plant","Woodroom"],"tickfont":{"size":10}},"legend":{"title":{"text":"Loai"},"tracegroupgap":0,"orientation":"h","y":-0.25,"x":0.5,"xanchor":"center"},"title":{"text":"\u003cb\u003eIssue thiết bị\u003c\u002fb\u003e","x":0.5},"barmode":"group","height":260,"width":380,"margin":{"t":40,"b":30,"l":100,"r":70},"plot_bgcolor":"white","paper_bgcolor":"white","bargap":0.35},                        {"responsive": true}                    )                };                            </script>        </div></div></div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- =============== TAB ELECTRICAL =============== -->
+<div id="electrical" style="display:none;">
+  <div class="dash-box">
+    <h4>⚡ Electrical - Danh sách thiết bị</h4>
+
+    <div class="table-wrapper mt-3" id="electricalTable"><table border="1" class="dataframe table table-sm table-bordered align-middle">
+  <thead>
+    <tr style="text-align: right;">
+      <th>STT</th>
+      <th>Khu vực</th>
+      <th>Thiết bị</th>
+      <th>Tình trạng</th>
+      <th>Thời gian</th>
+      <th>Hình ảnh</th>
+      <th>Đánh giá</th>
+      <th>Kế hoạch</th>
+      <th>Trạng thái</th>
+      <th>Ghi chú</th>
+      <th>Tồn đọng</th>
+      <th>Tuần</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>Woodroom</td>
+      <td>Chipper 1 không hoạt động</td>
+      <td>Trip cầu chì 24V 1000-F523</td>
+      <td>Tháng 4</td>
+      <td><div style="text-align:center;"><img src="https://drive.google.com/uc?id=15lHPQ4Y2TvGwVTVR6C-YgOMBl6VJVSvv" class="img-thumb" /></div></td>
+      <td>sensor dò lệch belt 1941S107 bị chạm chập một tiếp điểm về card Safety. Hiện đang bypass tiếp điểm lỗi</td>
+      <td>Thay bộ dò lêch belt khác (bộ cũ tiếp điểm rỉ sét) và kiểm tra lại dây</td>
+      <td>Đang theo dõi</td>
+      <td>Chưa có vật tư</td>
+      <td>x</td>
+      <td>44</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>Refiner</td>
+      <td>Sensor báo nghẹt 2420</td>
+      <td>Báo lỗi tín hiệu nhiều lần</td>
+      <td>Tháng 7</td>
+      <td><div style="text-align:center;"><img src="https://drive.google.com/uc?id=1UzIXUJKi4qCg2r97ZUPYap7ZC3IVaX8K" class="img-thumb" /></div></td>
+      <td>Reset tín hiệu</td>
+      <td>Board có dấu hiệu bị rỉ ở chân linh kiện, dừng máy kiểm tra vệ sinh hàn lại chân</td>
+      <td>Chưa hoàn thành</td>
+      <td>Đang đề xuất mua</td>
+      <td>x</td>
+      <td>44</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>Energy Plant</td>
+      <td>Sensor đo mức Dust Silo</td>
+      <td>Báo sai giá trị</td>
+      <td>10/8/2025</td>
+      <td><div style="text-align:center;"><img src="https://drive.google.com/thumbnail?id=1wnFq3lr9dPEbuoq9PoibplwQm26ql_Jp&sz=w1000" class="img-thumb" /></div></td>
+      <td>Restart lại sensor</td>
+      <td>Không</td>
+      <td>Hoàn thành</td>
+      <td>NaN</td>
+      <td></td>
+      <td>44</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>Energy Plant</td>
+      <td>Sensor báo mức dust silo</td>
+      <td>Báo sai giá trị</td>
+      <td>10/8/2025</td>
+      <td><div style="text-align:center;"><img src="https://drive.google.com/thumbnail?id=1LfoWT_pvDiNaBYgDtADkW1vmg-IE9mxO&sz=w1000" class="img-thumb" /></div></td>
+      <td>Restart lại sensor</td>
+      <td>Không</td>
+      <td>Hoàn thành</td>
+      <td>NaN</td>
+      <td></td>
+      <td>44</td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td>Energy Plant</td>
+      <td>Xilanh rút liệu Dust Silo</td>
+      <td>Không hoạt động</td>
+      <td>10/8/2025</td>
+      <td></td>
+      <td>Vệ sinh tiếp điểm công tắc hành trình</td>
+      <td>Không</td>
+      <td>Hoàn thành</td>
+      <td>NaN</td>
+      <td></td>
+      <td>44</td>
+    </tr>
+    <tr>
+      <td>6</td>
+      <td>Press</td>
+      <td>Stack 5280</td>
+      <td>Đễm sai số lượng ván</td>
+      <td>10/4/2025</td>
+      <td></td>
+      <td>Sensor 5280B16 tín hiệu chập chờn, đã chỉnh lại độ nhạy sensor</td>
+      <td>Không</td>
+      <td>Hoàn thành</td>
+      <td>NaN</td>
+      <td></td>
+      <td>44</td>
+    </tr>
+    <tr>
+      <td>7</td>
+      <td>Press</td>
+      <td>Bộ đo mật độ thảm SicoScan</td>
+      <td>Bị đơ không đo được</td>
+      <td>10/4/2025</td>
+      <td></td>
+      <td>Reset lại bộ đo</td>
+      <td>Không</td>
+      <td>Hoàn thành</td>
+      <td>NaN</td>
+      <td></td>
+      <td>44</td>
+    </tr>
+    <tr>
+      <td>8</td>
+      <td>Press</td>
+      <td>Màn hình vận hành OP3</td>
+      <td>Bị đơ không thao tác được</td>
+      <td>10/6/2025</td>
+      <td></td>
+      <td>Reset lại nguồn</td>
+      <td>Không</td>
+      <td>Hoàn thành</td>
+      <td>NaN</td>
+      <td></td>
+      <td>44</td>
+    </tr>
+    <tr>
+      <td>9</td>
+      <td>Press</td>
+      <td>Stack 5280</td>
+      <td>Báo lỗi safety</td>
+      <td>10/6/2025</td>
+      <td></td>
+      <td>Bụi ván lót làm nhiễu tín hiệu, vệ sinh reset lại tín hiệu</td>
+      <td>Không</td>
+      <td>Hoàn thành</td>
+      <td>NaN</td>
+      <td></td>
+      <td>44</td>
+    </tr>
+    <tr>
+      <td>10</td>
+      <td>Press</td>
+      <td>Bộ đo thickness và blister</td>
+      <td>Không đo được</td>
+      <td>10/6/2025</td>
+      <td><div style="text-align:center;"><img src="https://drive.google.com/uc?id=13A5qqrHXOXxJYeXpzGg81oKKGGQ5nSzI" class="img-thumb" /></div></td>
+      <td>Tín hiệu sensor bình thường, vệ sinh bề mặt sensor, reset lại tín hiệu</td>
+      <td>Không</td>
+      <td>Hoàn thành</td>
+      <td>NaN</td>
+      <td></td>
+      <td>44</td>
+    </tr>
+    <tr>
+      <td>11</td>
+      <td>Press</td>
+      <td>Bộ đo mật độ thảm Sicoscan</td>
+      <td>Bị đơ không đo được</td>
+      <td>10/6/2025</td>
+      <td></td>
+      <td>Reset lại bộ đo</td>
+      <td>Không</td>
+      <td>Hoàn thành</td>
+      <td>NaN</td>
+      <td></td>
+      <td>45</td>
+    </tr>
+    <tr>
+      <td>12</td>
+      <td>Press</td>
+      <td>Sensor dò tia lửa Minimax outfeed</td>
+      <td>Bị ván đâm vào đứt dây</td>
+      <td>10/6/2025</td>
+      <td></td>
+      <td>Nối lại dây sensor</td>
+      <td>Kiểm tra thay dây mới do bị ván đâm đứt dây nhiều lần</td>
+      <td>Hoàn thành</td>
+      <td>NaN</td>
+      <td></td>
+      <td>45</td>
+    </tr>
+    <tr>
+      <td>13</td>
+      <td>Press</td>
+      <td>Bộ đo mật độ thảm Sicoscan</td>
+      <td>Không hoạt động</td>
+      <td>10/8/2025</td>
+      <td></td>
+      <td>Reset lại bộ đo</td>
+      <td>Không</td>
+      <td>Hoàn thành</td>
+      <td>NaN</td>
+      <td></td>
+      <td>45</td>
+    </tr>
+    <tr>
+      <td>14</td>
+      <td>Press</td>
+      <td>Sensor 5275B16</td>
+      <td>Tín hiệu chập chờn</td>
+      <td>10/8/2025</td>
+      <td></td>
+      <td>Chỉnh lại độ nhạy sensor</td>
+      <td>Không</td>
+      <td>Hoàn thành</td>
+      <td>NaN</td>
+      <td></td>
+      <td>45</td>
+    </tr>
+    <tr>
+      <td>15</td>
+      <td>Press</td>
+      <td>Stack 5280</td>
+      <td>Đếm sai số lượng ván</td>
+      <td>10/8/2025</td>
+      <td></td>
+      <td>Chỉnh lại vị trí sensor và độ nhạy sensor</td>
+      <td>Không</td>
+      <td>Hoàn thành</td>
+      <td>NaN</td>
+      <td></td>
+      <td>45</td>
+    </tr>
+    <tr>
+      <td>16</td>
+      <td>Press</td>
+      <td>Cưa cắt ngang số 2</td>
+      <td>Báo lỗi axis cut fault</td>
+      <td>10/8/2025</td>
+      <td></td>
+      <td>Kiểm tra reset lại tín hiệu cưa</td>
+      <td>Dừng máy kiểm tra lại tín hiệu group cưa</td>
+      <td>Đang theo dõi</td>
+      <td>NaN</td>
+      <td></td>
+      <td>45</td>
+    </tr>
+    <tr>
+      <td>17</td>
+      <td>Press</td>
+      <td>Bộ đo mật thảm Sicoscan</td>
+      <td>Không đo được</td>
+      <td>10/9/2025</td>
+      <td></td>
+      <td>Reset lại bộ đo</td>
+      <td>Không</td>
+      <td>Hoàn thành</td>
+      <td>NaN</td>
+      <td></td>
+      <td>45</td>
+    </tr>
+    <tr>
+      <td>18</td>
+      <td>Press</td>
+      <td>Motor cưa cắt ngang 52142M01</td>
+      <td>Không hoạt động</td>
+      <td>10/9/2025</td>
+      <td></td>
+      <td>kẹt ván, trip CB. Đã reset lại CB</td>
+      <td>Không</td>
+      <td>Hoàn thành</td>
+      <td>NaN</td>
+      <td></td>
+      <td>45</td>
+    </tr>
+    <tr>
+      <td>19</td>
+      <td>Press</td>
+      <td>Cưa cắt ngang số 3 52143M01</td>
+      <td>Báo lỗi mất vị trí nâng hạ</td>
+      <td>10/10/2025</td>
+      <td></td>
+      <td>Cưa rút lên chậm, chỉnh lại valve tiết lưu xilanh</td>
+      <td>Chỉnh sai hướng valve tiết lưu nên rút chậm</td>
+      <td>Hoàn thành</td>
+      <td>NaN</td>
+      <td></td>
+      <td>45</td>
+    </tr>
+    <tr>
+      <td>20</td>
+      <td>Press</td>
+      <td>Cưa cắt ngang số 3 52143M01</td>
+      <td>Báo lỗi "52143Y90 Diagonal Saw 3 Safety Valve Check tripped"</td>
+      <td>10/10/2025</td>
+      <td></td>
+      <td>kích tay valve khí nén 52143Y90 nhiều lần, reset lại tín hiệu</td>
+      <td>Valve bị kẹt</td>
+      <td>Hoàn thành</td>
+      <td>NaN</td>
+      <td></td>
+      <td>45</td>
+    </tr>
+    <tr>
+      <td>21</td>
+      <td>Press</td>
+      <td>Bộ đo mật độ thảm Sicoscan</td>
+      <td>Không hoạt động</td>
+      <td>10/10/2025</td>
+      <td></td>
+      <td>Reset lại bộ đo</td>
+      <td>Lỗi thường xuất hiện</td>
+      <td>Đang theo dõi</td>
+      <td>NaN</td>
+      <td></td>
+      <td>45</td>
+    </tr>
+    <tr>
+      <td>22</td>
+      <td>Sanding</td>
+      <td>Trạm cấp ván vào máy chà</td>
+      <td>Báo lỗi safety</td>
+      <td>10/5/2025</td>
+      <td></td>
+      <td>Thanh safety bàn nâng trạm cấp ván bị rớt ra, đã gia cố lại thanh safety, reset lại trạm</td>
+      <td>Không</td>
+      <td>Hoàn thành</td>
+      <td>NaN</td>
+      <td></td>
+      <td>45</td>
+    </tr>
+    <tr>
+      <td>23</td>
+      <td>Sanding</td>
+      <td>Valve tracking máy chà nhám số 6</td>
+      <td>Không hoạt động</td>
+      <td>10/6/2025</td>
+      <td></td>
+      <td>Thay valve mới</td>
+      <td>Không</td>
+      <td>Hoàn thành</td>
+      <td>NaN</td>
+      <td></td>
+      <td>45</td>
+    </tr>
+    <tr>
+      <td>24</td>
+      <td>Woodroom</td>
+      <td>Biến tần 107M11</td>
+      <td>Báo lỗi DC Bus Overvoltage</td>
+      <td>10/7/2025</td>
+      <td></td>
+      <td>Kiểm tra đo motor và biến tần bình thường, reset lại tín hiệu</td>
+      <td>Không</td>
+      <td>Hoàn thành</td>
+      <td>NaN</td>
+      <td></td>
+      <td>45</td>
+    </tr>
+    <tr>
+      <td>25</td>
+      <td>Woodroom</td>
+      <td>Motor Infeed chipper 1</td>
+      <td>Bị trip soft starter reset không hết</td>
+      <td>10/7/2025</td>
+      <td></td>
+      <td>Dây động lực bị đứt. Đã đấu nối lại</td>
+      <td>Không</td>
+      <td>Hoàn thành</td>
+      <td>NaN</td>
+      <td></td>
+      <td>45</td>
+    </tr>
+    <tr>
+      <td>26</td>
+      <td>Woodroom</td>
+      <td>Còi báo metan chipper 1</td>
+      <td>Không hoạt động</td>
+      <td>10/7/2025</td>
+      <td></td>
+      <td>Bị đứt dây. Đã hàn lại dây</td>
+      <td>Không</td>
+      <td>Hoàn thành</td>
+      <td>NaN</td>
+      <td></td>
+      <td>45</td>
+    </tr>
+    <tr>
+      <td>27</td>
+      <td>Woodroom</td>
+      <td>Biến tần 107M11</td>
+      <td>Báo lỗi DC Bus Overvoltage</td>
+      <td>10/7/2025</td>
+      <td></td>
+      <td>Đầu nối dây động lực đấu nối vào terminal bị lỏng đã siết lại và reset lại biến tần</td>
+      <td>Không</td>
+      <td>Hoàn thành</td>
+      <td>NaN</td>
+      <td></td>
+      <td>46</td>
+    </tr>
+    <tr>
+      <td>28</td>
+      <td>Woodroom</td>
+      <td>Máy mài dao</td>
+      <td>Không hoạt động</td>
+      <td>10/8/2025</td>
+      <td></td>
+      <td>Đứt cầu chì, đã thay cầu chì mới</td>
+      <td>Không</td>
+      <td>Hoàn thành</td>
+      <td>NaN</td>
+      <td></td>
+      <td>46</td>
+    </tr>
+    <tr>
+      <td>29</td>
+      <td>Woodroom</td>
+      <td>Biến tần 107M11</td>
+      <td>Báo lỗi DC bus Overvoltage</td>
+      <td>10/9/2025</td>
+      <td></td>
+      <td>Reset lại biến tần</td>
+      <td>Cài thông số biến tần sẵn sàng thay thế</td>
+      <td>Hoàn thành</td>
+      <td>NaN</td>
+      <td></td>
+      <td>46</td>
+    </tr>
+  </tbody>
+</table></div>
+
+  </div>
+</div>
+
+<!-- =============== TAB MECHANICAL =============== -->
+<div id="mechanical" style="display:none;">
+  <div class="dash-box">
+    <h4>⚙️ Mechanical - Danh sách thiết bị</h4>
+
+    <div class="table-wrapper mt-3" id="mechanicalTable"><table border="1" class="dataframe table table-sm table-bordered align-middle">
+  <thead>
+    <tr style="text-align: right;">
+      <th>STT</th>
+      <th>Khu vực</th>
+      <th>Thiết bị</th>
+      <th>Tình trạng</th>
+      <th>Thời gian</th>
+      <th>Hình ảnh</th>
+      <th>Đánh giá</th>
+      <th>Kế hoạch</th>
+      <th>Trạng thái</th>
+      <th>Ghi chú</th>
+      <th>Tồn đọng</th>
+      <th>Tuần</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>Woodroom</td>
+      <td>Vít tải 107</td>
+      <td>cánh hiện tại có hiện tượng mòn mỏng vị trí dòng liệu đổ vào, VỎ VÍT BỊ MÒN</td>
+      <td>40-44</td>
+      <td><div style="text-align:center;"><img src="https://drive.google.com/uc?id=1nH6QUcNFy9MAcBpZPuKiud_CWsdTkqfp" class="img-thumb" /></div></td>
+      <td>PKTBT theo dõi vị trí cáng và đang đặt dự phòng</td>
+      <td>dự kiến cuối 2025 thay thế</td>
+      <td>Đang theo dõi</td>
+      <td>NaN</td>
+      <td>x</td>
+      <td>44</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>Woodroom</td>
+      <td>vít tải 1221</td>
+      <td>cánh hiện tại có hiện tượng mòn mỏng vị trí dòng liệu đổ vào</td>
+      <td>40-44</td>
+      <td><div style="text-align:center;"><img src="https://drive.google.com/uc?id=1MdSsHGwL2QoOP9USRCi7tpdSNRIOIqXK" class="img-thumb" /></div></td>
+      <td>PKTBT theo dõi vị trí cáng và đang đặt dự phòng</td>
+      <td>dự kiến cuối 2025 thay thế</td>
+      <td>Hoàn thành</td>
+      <td>NaN</td>
+      <td>x</td>
+      <td>44</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>Refiner</td>
+      <td>VÍT TẢI 2206</td>
+      <td>TRỤC MÒN VÀ CÁNH CONG VÊNH</td>
+      <td>46</td>
+      <td><div style="text-align:center;"><img src="https://drive.google.com/uc?id=1fyUvWGxa3vJ6hleXMlpML1gVZeo0n73X" class="img-thumb" /></div></td>
+      <td>CẦN ĐẶT DỰ PHÒNG TRỤC MỚI</td>
+      <td>NaN</td>
+      <td>Đang theo dõi</td>
+      <td>NaN</td>
+      <td>x</td>
+      <td>44</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>Refiner</td>
+      <td>Đường ống khí nén 2101, 2102</td>
+      <td>bị hư hỏng</td>
+      <td>2/8/2025</td>
+      <td><div style="text-align:center;"><img src="https://drive.google.com/uc?id=1GwTjbzDKEtZf_gk5Q73MRyKdaRBd3aAD" class="img-thumb" /></div></td>
+      <td>gia công thay thế đường ôngs mới</td>
+      <td>NaN</td>
+      <td>Chưa hoàn thành</td>
+      <td>NaN</td>
+      <td>x</td>
+      <td>44</td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td>Energy Plant</td>
+      <td>Chimney stack</td>
+      <td>Rĩ sét và các chân khung kết cấu mục</td>
+      <td>NaN</td>
+      <td></td>
+      <td>Hàn gia cố và bọc lại bảo ôn</td>
+      <td>kế hoạch năm 2025</td>
+      <td>Hoàn thành</td>
+      <td>NaN</td>
+      <td></td>
+      <td>44</td>
+    </tr>
+    <tr>
+      <td>6</td>
+      <td>Energy Plant</td>
+      <td>Measunring</td>
+      <td>bị rò rỉ nước</td>
+      <td>13/07/2025</td>
+      <td><div style="text-align:center;"><img src="https://drive.google.com/uc?id=11d5MNOq6Uxxk0yOa8BHfldkVtC305dza" class="img-thumb" /></div></td>
+      <td>Lên kế hoạch xử lí dừng dài</td>
+      <td>NaN</td>
+      <td>Đang theo dõi</td>
+      <td>NaN</td>
+      <td>x</td>
+      <td>45</td>
+    </tr>
+    <tr>
+      <td>7</td>
+      <td>Energy Plant</td>
+      <td>Feeding conveyor \n7380</td>
+      <td>Sàng thao tác bên trái bị mục từ đầu phía trên dài \nxuống dưới</td>
+      <td>NaN</td>
+      <td><div style="text-align:center;"><img src="https://drive.google.com/uc?id=1AtRp5B7K6RLLdSWQTv1YyrmARbjPEGN_" class="img-thumb" /></div></td>
+      <td>Thay mới các tấm Rating</td>
+      <td>kế hoạch năm 2025</td>
+      <td>Đang theo dõi</td>
+      <td>NaN</td>
+      <td>x</td>
+      <td>45</td>
+    </tr>
+    <tr>
+      <td>8</td>
+      <td>Nhà máy keo</td>
+      <td>Đường nước bơm cooling</td>
+      <td>Bị mụt đường ống</td>
+      <td>NaN</td>
+      <td><div style="text-align:center;"><img src="https://drive.google.com/thumbnail?id=1FwMlFPfa9ZR03Y4FA9BUDvGJhpcjnRVC&sz=w1000" class="img-thumb" /></div></td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>Đang theo dõi</td>
+      <td>NaN</td>
+      <td>x</td>
+      <td>45</td>
+    </tr>
+    <tr>
+      <td>9</td>
+      <td>Nhà máy keo</td>
+      <td>Đường ống xả team</td>
+      <td>Bị mụt đường ống</td>
+      <td>9/26/2025</td>
+      <td><div style="text-align:center;"><img src="https://drive.google.com/thumbnail?id=1RtgAxKmj8XF-PHAE3Xrv2SZF5RF2eR3w&sz=w1000" class="img-thumb" /></div></td>
+      <td>Lên kế hoạch kiểm tra</td>
+      <td>NaN</td>
+      <td>Đang theo dõi</td>
+      <td>NaN</td>
+      <td>x</td>
+      <td>45</td>
+    </tr>
+    <tr>
+      <td>10</td>
+      <td>Press</td>
+      <td>cƯA BIÊN</td>
+      <td>CẮT KHÔNG ĐẠT</td>
+      <td>5/10/2025</td>
+      <td></td>
+      <td>THAY THẾ LƯỠI CƯA DỰ PHÒNG</td>
+      <td>NaN</td>
+      <td>Hoàn thành</td>
+      <td>NaN</td>
+      <td></td>
+      <td>46</td>
+    </tr>
+    <tr>
+      <td>11</td>
+      <td>Woodroom</td>
+      <td>BĂNG TẢI 1215</td>
+      <td>CON LĂN HƯ VÒNG BI</td>
+      <td>6/10/2025</td>
+      <td></td>
+      <td>THAY THẾ VÒNG BI</td>
+      <td>NaN</td>
+      <td>Hoàn thành</td>
+      <td>NaN</td>
+      <td></td>
+      <td>46</td>
+    </tr>
+    <tr>
+      <td>12</td>
+      <td>Refiner</td>
+      <td>MỠ TRUNG TÂM</td>
+      <td>HẾT THÙNG MỠ</td>
+      <td>6/10/2025</td>
+      <td></td>
+      <td>THAY THẾ THÙNG MỠ MỚI</td>
+      <td>NaN</td>
+      <td>Hoàn thành</td>
+      <td>NaN</td>
+      <td></td>
+      <td>46</td>
+    </tr>
+    <tr>
+      <td>13</td>
+      <td>Phụ trợ</td>
+      <td>ĐƯỜNG ỐNG CHỮA CHÁY</td>
+      <td>BỊ MÒN THỦNG</td>
+      <td>6/10/2025</td>
+      <td></td>
+      <td>GIA CÔNG CÙM GIA CỐ</td>
+      <td>NaN</td>
+      <td>Hoàn thành</td>
+      <td>NaN</td>
+      <td></td>
+      <td>46</td>
+    </tr>
+    <tr>
+      <td>14</td>
+      <td>Energy Plant</td>
+      <td>TANK DẦU STEPGATE</td>
+      <td>THIẾU DẦU</td>
+      <td>6/10/2025</td>
+      <td></td>
+      <td>CHÂM BỔ SUNG 30lit</td>
+      <td>NaN</td>
+      <td>Hoàn thành</td>
+      <td>NaN</td>
+      <td></td>
+      <td>46</td>
+    </tr>
+    <tr>
+      <td>15</td>
+      <td>Energy Plant</td>
+      <td>TANK DẦU MOVING FOOL</td>
+      <td>THIẾU DẦU</td>
+      <td>6/10/2025</td>
+      <td></td>
+      <td>CHÂM BỔ SUNG 60lit</td>
+      <td>NaN</td>
+      <td>Hoàn thành</td>
+      <td>NaN</td>
+      <td></td>
+      <td>46</td>
+    </tr>
+    <tr>
+      <td>16</td>
+      <td>Refiner</td>
+      <td>SABI</td>
+      <td>BỊ RÒ RỈ DẦU HỘP SỐ</td>
+      <td>10/10/2025</td>
+      <td></td>
+      <td>LẮP LÊN DỰ PHÒNG</td>
+      <td>NaN</td>
+      <td>Hoàn thành</td>
+      <td>NaN</td>
+      <td></td>
+      <td>46</td>
+    </tr>
+    <tr>
+      <td>17</td>
+      <td>Woodroom</td>
+      <td>TRỐNG BÓC VỎ</td>
+      <td>VÁCH BỊ BUNG</td>
+      <td>9/10/2025</td>
+      <td></td>
+      <td>HÀN GIA CỐ VÁCH</td>
+      <td>NaN</td>
+      <td>Hoàn thành</td>
+      <td>NaN</td>
+      <td></td>
+      <td>46</td>
+    </tr>
+    <tr>
+      <td>18</td>
+      <td>Woodroom</td>
+      <td>BĂNG TẢI 1256</td>
+      <td>CON LĂN DÀI HƯ HỎNG</td>
+      <td>10/10/2025</td>
+      <td></td>
+      <td>THAY THẾ CON LĂN DỰ PHÒNG</td>
+      <td>NaN</td>
+      <td>Hoàn thành</td>
+      <td>NaN</td>
+      <td></td>
+      <td>46</td>
+    </tr>
+    <tr>
+      <td>19</td>
+      <td>Woodroom</td>
+      <td>BĂNG TẢI 1941</td>
+      <td>CON LĂN DÀI HƯ HỎNG</td>
+      <td>10/10/2025</td>
+      <td></td>
+      <td>THAY THẾ CON LĂN DỰ PHÒNG</td>
+      <td>NaN</td>
+      <td>Hoàn thành</td>
+      <td>NaN</td>
+      <td></td>
+      <td>46</td>
+    </tr>
+    <tr>
+      <td>20</td>
+      <td>Woodroom</td>
+      <td>DAO LÓT</td>
+      <td>BỊ GÃY BULONG</td>
+      <td>10/10/2025</td>
+      <td></td>
+      <td>XỬ LÍ BULONG GÃY</td>
+      <td>NaN</td>
+      <td>Hoàn thành</td>
+      <td>NaN</td>
+      <td></td>
+      <td>46</td>
+    </tr>
+    <tr>
+      <td>21</td>
+      <td>Woodroom</td>
+      <td>XÍCH 101</td>
+      <td>XÍCH KÉO CHỦ ĐỘNG BỊ ĐỨT</td>
+      <td>11/10/2025</td>
+      <td></td>
+      <td>NỐI LẠI XÍCH CHỦ ĐỘNG</td>
+      <td>NaN</td>
+      <td>Hoàn thành</td>
+      <td>NaN</td>
+      <td></td>
+      <td>46</td>
+    </tr>
+  </tbody>
+</table></div>
+
+  </div>
+</div>
+
+</div> <!-- END container-fluid -->
+
+<!-- ======================================================
+   FILTER + CHART UPDATE JS (full UI)
+   ====================================================== -->
+<script>
+/* Data passed from Python */
+const dfE_all = [{"STT": 1, "KhuVuc": "Woodroom", "ThietBi": "Chipper 1 không hoạt động", "TinhTrang": "Trip cầu chì 24V 1000-F523", "ThoiGian": "Tháng 4", "HinhAnh": "<div style=\"text-align:center;\"><img src=\"https://drive.google.com/uc?id=15lHPQ4Y2TvGwVTVR6C-YgOMBl6VJVSvv\" class=\"img-thumb\" /></div>", "DanhGia": "sensor dò lệch belt 1941S107 bị chạm chập một tiếp điểm về card Safety. Hiện đang bypass tiếp điểm lỗi", "KeHoach": "Thay bộ dò lêch belt khác (bộ cũ tiếp điểm rỉ sét) và kiểm tra lại dây", "TrangThai": "Đang theo dõi", "GhiChu": "Chưa có vật tư", "TonDong": "x", "Tuan": 44}, {"STT": 2, "KhuVuc": "Refiner", "ThietBi": "Sensor báo nghẹt 2420", "TinhTrang": "Báo lỗi tín hiệu nhiều lần", "ThoiGian": "Tháng 7", "HinhAnh": "<div style=\"text-align:center;\"><img src=\"https://drive.google.com/uc?id=1UzIXUJKi4qCg2r97ZUPYap7ZC3IVaX8K\" class=\"img-thumb\" /></div>", "DanhGia": "Reset tín hiệu", "KeHoach": "Board có dấu hiệu bị rỉ ở chân linh kiện, dừng máy kiểm tra vệ sinh hàn lại chân", "TrangThai": "Chưa hoàn thành", "GhiChu": "Đang đề xuất mua", "TonDong": "x", "Tuan": 44}, {"STT": 3, "KhuVuc": "Energy Plant", "ThietBi": "Sensor đo mức Dust Silo", "TinhTrang": "Báo sai giá trị", "ThoiGian": "10/8/2025", "HinhAnh": "<div style=\"text-align:center;\"><img src=\"https://drive.google.com/thumbnail?id=1wnFq3lr9dPEbuoq9PoibplwQm26ql_Jp&sz=w1000\" class=\"img-thumb\" /></div>", "DanhGia": "Restart lại sensor", "KeHoach": "Không", "TrangThai": "Hoàn thành", "GhiChu": NaN, "TonDong": "", "Tuan": 44}, {"STT": 4, "KhuVuc": "Energy Plant", "ThietBi": "Sensor báo mức dust silo", "TinhTrang": "Báo sai giá trị", "ThoiGian": "10/8/2025", "HinhAnh": "<div style=\"text-align:center;\"><img src=\"https://drive.google.com/thumbnail?id=1LfoWT_pvDiNaBYgDtADkW1vmg-IE9mxO&sz=w1000\" class=\"img-thumb\" /></div>", "DanhGia": "Restart lại sensor", "KeHoach": "Không", "TrangThai": "Hoàn thành", "GhiChu": NaN, "TonDong": "", "Tuan": 44}, {"STT": 5, "KhuVuc": "Energy Plant", "ThietBi": "Xilanh rút liệu Dust Silo", "TinhTrang": "Không hoạt động", "ThoiGian": "10/8/2025", "HinhAnh": "", "DanhGia": "Vệ sinh tiếp điểm công tắc hành trình", "KeHoach": "Không", "TrangThai": "Hoàn thành", "GhiChu": NaN, "TonDong": "", "Tuan": 44}, {"STT": 6, "KhuVuc": "Press", "ThietBi": "Stack 5280", "TinhTrang": "Đễm sai số lượng ván", "ThoiGian": "10/4/2025", "HinhAnh": "", "DanhGia": "Sensor 5280B16 tín hiệu chập chờn, đã chỉnh lại độ nhạy sensor", "KeHoach": "Không", "TrangThai": "Hoàn thành", "GhiChu": NaN, "TonDong": "", "Tuan": 44}, {"STT": 7, "KhuVuc": "Press", "ThietBi": "Bộ đo mật độ thảm SicoScan", "TinhTrang": "Bị đơ không đo được", "ThoiGian": "10/4/2025", "HinhAnh": "", "DanhGia": "Reset lại bộ đo", "KeHoach": "Không", "TrangThai": "Hoàn thành", "GhiChu": NaN, "TonDong": "", "Tuan": 44}, {"STT": 8, "KhuVuc": "Press", "ThietBi": "Màn hình vận hành OP3", "TinhTrang": "Bị đơ không thao tác được", "ThoiGian": "10/6/2025", "HinhAnh": "", "DanhGia": "Reset lại nguồn", "KeHoach": "Không", "TrangThai": "Hoàn thành", "GhiChu": NaN, "TonDong": "", "Tuan": 44}, {"STT": 9, "KhuVuc": "Press", "ThietBi": "Stack 5280", "TinhTrang": "Báo lỗi safety", "ThoiGian": "10/6/2025", "HinhAnh": "", "DanhGia": "Bụi ván lót làm nhiễu tín hiệu, vệ sinh reset lại tín hiệu", "KeHoach": "Không", "TrangThai": "Hoàn thành", "GhiChu": NaN, "TonDong": "", "Tuan": 44}, {"STT": 10, "KhuVuc": "Press", "ThietBi": "Bộ đo thickness và blister", "TinhTrang": "Không đo được", "ThoiGian": "10/6/2025", "HinhAnh": "<div style=\"text-align:center;\"><img src=\"https://drive.google.com/uc?id=13A5qqrHXOXxJYeXpzGg81oKKGGQ5nSzI\" class=\"img-thumb\" /></div>", "DanhGia": "Tín hiệu sensor bình thường, vệ sinh bề mặt sensor, reset lại tín hiệu", "KeHoach": "Không", "TrangThai": "Hoàn thành", "GhiChu": NaN, "TonDong": "", "Tuan": 44}, {"STT": 11, "KhuVuc": "Press", "ThietBi": "Bộ đo mật độ thảm Sicoscan", "TinhTrang": "Bị đơ không đo được", "ThoiGian": "10/6/2025", "HinhAnh": "", "DanhGia": "Reset lại bộ đo", "KeHoach": "Không", "TrangThai": "Hoàn thành", "GhiChu": NaN, "TonDong": "", "Tuan": 45}, {"STT": 12, "KhuVuc": "Press", "ThietBi": "Sensor dò tia lửa Minimax outfeed", "TinhTrang": "Bị ván đâm vào đứt dây", "ThoiGian": "10/6/2025", "HinhAnh": "", "DanhGia": "Nối lại dây sensor", "KeHoach": "Kiểm tra thay dây mới do bị ván đâm đứt dây nhiều lần", "TrangThai": "Hoàn thành", "GhiChu": NaN, "TonDong": "", "Tuan": 45}, {"STT": 13, "KhuVuc": "Press", "ThietBi": "Bộ đo mật độ thảm Sicoscan", "TinhTrang": "Không hoạt động", "ThoiGian": "10/8/2025", "HinhAnh": "", "DanhGia": "Reset lại bộ đo", "KeHoach": "Không", "TrangThai": "Hoàn thành", "GhiChu": NaN, "TonDong": "", "Tuan": 45}, {"STT": 14, "KhuVuc": "Press", "ThietBi": "Sensor 5275B16", "TinhTrang": "Tín hiệu chập chờn", "ThoiGian": "10/8/2025", "HinhAnh": "", "DanhGia": "Chỉnh lại độ nhạy sensor", "KeHoach": "Không", "TrangThai": "Hoàn thành", "GhiChu": NaN, "TonDong": "", "Tuan": 45}, {"STT": 15, "KhuVuc": "Press", "ThietBi": "Stack 5280", "TinhTrang": "Đếm sai số lượng ván", "ThoiGian": "10/8/2025", "HinhAnh": "", "DanhGia": "Chỉnh lại vị trí sensor và độ nhạy sensor", "KeHoach": "Không", "TrangThai": "Hoàn thành", "GhiChu": NaN, "TonDong": "", "Tuan": 45}, {"STT": 16, "KhuVuc": "Press", "ThietBi": "Cưa cắt ngang số 2", "TinhTrang": "Báo lỗi axis cut fault ", "ThoiGian": "10/8/2025", "HinhAnh": "", "DanhGia": "Kiểm tra reset lại tín hiệu cưa", "KeHoach": "Dừng máy kiểm tra lại tín hiệu group cưa", "TrangThai": "Đang theo dõi", "GhiChu": NaN, "TonDong": "", "Tuan": 45}, {"STT": 17, "KhuVuc": "Press", "ThietBi": "Bộ đo mật thảm Sicoscan", "TinhTrang": "Không đo được", "ThoiGian": "10/9/2025", "HinhAnh": "", "DanhGia": "Reset lại bộ đo", "KeHoach": "Không", "TrangThai": "Hoàn thành", "GhiChu": NaN, "TonDong": "", "Tuan": 45}, {"STT": 18, "KhuVuc": "Press", "ThietBi": "Motor cưa cắt ngang 52142M01", "TinhTrang": "Không hoạt động", "ThoiGian": "10/9/2025", "HinhAnh": "", "DanhGia": "kẹt ván, trip CB. Đã reset lại CB", "KeHoach": "Không", "TrangThai": "Hoàn thành", "GhiChu": NaN, "TonDong": "", "Tuan": 45}, {"STT": 19, "KhuVuc": "Press", "ThietBi": "Cưa cắt ngang số 3 52143M01", "TinhTrang": "Báo lỗi mất vị trí nâng hạ", "ThoiGian": "10/10/2025", "HinhAnh": "", "DanhGia": "Cưa rút lên chậm, chỉnh lại valve tiết lưu xilanh", "KeHoach": "Chỉnh sai hướng valve tiết lưu nên rút chậm", "TrangThai": "Hoàn thành", "GhiChu": NaN, "TonDong": "", "Tuan": 45}, {"STT": 20, "KhuVuc": "Press", "ThietBi": "Cưa cắt ngang số 3 52143M01", "TinhTrang": "Báo lỗi \"52143Y90 Diagonal Saw 3 Safety Valve Check tripped\"", "ThoiGian": "10/10/2025", "HinhAnh": "", "DanhGia": "kích tay valve khí nén 52143Y90 nhiều lần, reset lại tín hiệu", "KeHoach": "Valve bị kẹt", "TrangThai": "Hoàn thành", "GhiChu": NaN, "TonDong": "", "Tuan": 45}, {"STT": 21, "KhuVuc": "Press", "ThietBi": "Bộ đo mật độ thảm Sicoscan", "TinhTrang": "Không hoạt động", "ThoiGian": "10/10/2025", "HinhAnh": "", "DanhGia": "Reset lại bộ đo", "KeHoach": "Lỗi thường xuất hiện", "TrangThai": "Đang theo dõi", "GhiChu": NaN, "TonDong": "", "Tuan": 45}, {"STT": 22, "KhuVuc": "Sanding", "ThietBi": "Trạm cấp ván vào máy chà", "TinhTrang": "Báo lỗi safety", "ThoiGian": "10/5/2025", "HinhAnh": "", "DanhGia": " Thanh safety bàn nâng trạm cấp ván bị rớt ra, đã gia cố lại thanh safety, reset lại trạm", "KeHoach": "Không", "TrangThai": "Hoàn thành", "GhiChu": NaN, "TonDong": "", "Tuan": 45}, {"STT": 23, "KhuVuc": "Sanding", "ThietBi": "Valve tracking máy chà nhám số 6", "TinhTrang": "Không hoạt động", "ThoiGian": "10/6/2025", "HinhAnh": "", "DanhGia": "Thay valve mới", "KeHoach": "Không", "TrangThai": "Hoàn thành", "GhiChu": NaN, "TonDong": "", "Tuan": 45}, {"STT": 24, "KhuVuc": "Woodroom", "ThietBi": "Biến tần 107M11", "TinhTrang": "Báo lỗi DC Bus Overvoltage", "ThoiGian": "10/7/2025", "HinhAnh": "", "DanhGia": "Kiểm tra đo motor và biến tần bình thường, reset lại tín hiệu", "KeHoach": "Không", "TrangThai": "Hoàn thành", "GhiChu": NaN, "TonDong": "", "Tuan": 45}, {"STT": 25, "KhuVuc": "Woodroom", "ThietBi": "Motor Infeed chipper 1", "TinhTrang": "Bị trip soft starter reset không hết", "ThoiGian": "10/7/2025", "HinhAnh": "", "DanhGia": "Dây động lực bị đứt. Đã đấu nối lại", "KeHoach": "Không", "TrangThai": "Hoàn thành", "GhiChu": NaN, "TonDong": "", "Tuan": 45}, {"STT": 26, "KhuVuc": "Woodroom", "ThietBi": "Còi báo metan chipper 1", "TinhTrang": "Không hoạt động", "ThoiGian": "10/7/2025", "HinhAnh": "", "DanhGia": "Bị đứt dây. Đã hàn lại dây", "KeHoach": "Không", "TrangThai": "Hoàn thành", "GhiChu": NaN, "TonDong": "", "Tuan": 45}, {"STT": 27, "KhuVuc": "Woodroom", "ThietBi": "Biến tần 107M11", "TinhTrang": "Báo lỗi DC Bus Overvoltage", "ThoiGian": "10/7/2025", "HinhAnh": "", "DanhGia": "Đầu nối dây động lực đấu nối vào terminal bị lỏng đã siết lại và reset lại biến tần", "KeHoach": "Không", "TrangThai": "Hoàn thành", "GhiChu": NaN, "TonDong": "", "Tuan": 46}, {"STT": 28, "KhuVuc": "Woodroom", "ThietBi": "Máy mài dao", "TinhTrang": "Không hoạt động", "ThoiGian": "10/8/2025", "HinhAnh": "", "DanhGia": "Đứt cầu chì, đã thay cầu chì mới", "KeHoach": "Không", "TrangThai": "Hoàn thành", "GhiChu": NaN, "TonDong": "", "Tuan": 46}, {"STT": 29, "KhuVuc": "Woodroom", "ThietBi": "Biến tần 107M11", "TinhTrang": "Báo lỗi DC bus Overvoltage", "ThoiGian": "10/9/2025", "HinhAnh": "", "DanhGia": "Reset lại biến tần", "KeHoach": "Cài thông số biến tần sẵn sàng thay thế", "TrangThai": "Hoàn thành", "GhiChu": NaN, "TonDong": "", "Tuan": 46}];
+const dfM_all = [{"STT": 1, "KhuVuc": "Woodroom", "ThietBi": "Vít tải 107", "TinhTrang": "cánh hiện tại có hiện tượng mòn mỏng vị trí dòng liệu đổ vào, VỎ VÍT BỊ MÒN", "ThoiGian": "40-44", "HinhAnh": "<div style=\"text-align:center;\"><img src=\"https://drive.google.com/uc?id=1nH6QUcNFy9MAcBpZPuKiud_CWsdTkqfp\" class=\"img-thumb\" /></div>", "DanhGia": "PKTBT theo dõi vị trí cáng và đang đặt dự phòng", "KeHoach": "dự kiến cuối 2025 thay thế", "TrangThai": "Đang theo dõi", "GhiChu": NaN, "TonDong": "x", "Tuan": 44}, {"STT": 2, "KhuVuc": "Woodroom", "ThietBi": "vít tải 1221", "TinhTrang": "cánh hiện tại có hiện tượng mòn mỏng vị trí dòng liệu đổ vào", "ThoiGian": "40-44", "HinhAnh": "<div style=\"text-align:center;\"><img src=\"https://drive.google.com/uc?id=1MdSsHGwL2QoOP9USRCi7tpdSNRIOIqXK\" class=\"img-thumb\" /></div>", "DanhGia": "PKTBT theo dõi vị trí cáng và đang đặt dự phòng", "KeHoach": "dự kiến cuối 2025 thay thế", "TrangThai": "Hoàn thành", "GhiChu": NaN, "TonDong": "x", "Tuan": 44}, {"STT": 3, "KhuVuc": "Refiner", "ThietBi": "VÍT TẢI 2206", "TinhTrang": "TRỤC MÒN VÀ CÁNH CONG VÊNH", "ThoiGian": "46", "HinhAnh": "<div style=\"text-align:center;\"><img src=\"https://drive.google.com/uc?id=1fyUvWGxa3vJ6hleXMlpML1gVZeo0n73X\" class=\"img-thumb\" /></div>", "DanhGia": "CẦN ĐẶT DỰ PHÒNG TRỤC MỚI", "KeHoach": NaN, "TrangThai": "Đang theo dõi", "GhiChu": NaN, "TonDong": "x", "Tuan": 44}, {"STT": 4, "KhuVuc": "Refiner", "ThietBi": "Đường ống khí nén 2101, 2102", "TinhTrang": "bị hư hỏng", "ThoiGian": "2/8/2025", "HinhAnh": "<div style=\"text-align:center;\"><img src=\"https://drive.google.com/uc?id=1GwTjbzDKEtZf_gk5Q73MRyKdaRBd3aAD\" class=\"img-thumb\" /></div>", "DanhGia": "gia công thay thế đường ôngs mới", "KeHoach": NaN, "TrangThai": "Chưa hoàn thành", "GhiChu": NaN, "TonDong": "x", "Tuan": 44}, {"STT": 5, "KhuVuc": "Energy Plant", "ThietBi": "Chimney stack", "TinhTrang": "Rĩ sét và các chân khung kết cấu mục", "ThoiGian": NaN, "HinhAnh": "", "DanhGia": "Hàn gia cố và bọc lại bảo ôn", "KeHoach": "kế hoạch năm 2025", "TrangThai": "Hoàn thành", "GhiChu": NaN, "TonDong": "", "Tuan": 44}, {"STT": 6, "KhuVuc": "Energy Plant", "ThietBi": "Measunring", "TinhTrang": "bị rò rỉ nước", "ThoiGian": "13/07/2025", "HinhAnh": "<div style=\"text-align:center;\"><img src=\"https://drive.google.com/uc?id=11d5MNOq6Uxxk0yOa8BHfldkVtC305dza\" class=\"img-thumb\" /></div>", "DanhGia": "Lên kế hoạch xử lí dừng dài", "KeHoach": NaN, "TrangThai": "Đang theo dõi", "GhiChu": NaN, "TonDong": "x", "Tuan": 45}, {"STT": 7, "KhuVuc": "Energy Plant", "ThietBi": "Feeding conveyor \n7380", "TinhTrang": "Sàng thao tác bên trái bị mục từ đầu phía trên dài \nxuống dưới", "ThoiGian": NaN, "HinhAnh": "<div style=\"text-align:center;\"><img src=\"https://drive.google.com/uc?id=1AtRp5B7K6RLLdSWQTv1YyrmARbjPEGN_\" class=\"img-thumb\" /></div>", "DanhGia": "Thay mới các tấm Rating", "KeHoach": "kế hoạch năm 2025", "TrangThai": "Đang theo dõi", "GhiChu": NaN, "TonDong": "x", "Tuan": 45}, {"STT": 8, "KhuVuc": "Nhà máy keo", "ThietBi": "Đường nước bơm cooling", "TinhTrang": "Bị mụt đường ống", "ThoiGian": NaN, "HinhAnh": "<div style=\"text-align:center;\"><img src=\"https://drive.google.com/thumbnail?id=1FwMlFPfa9ZR03Y4FA9BUDvGJhpcjnRVC&sz=w1000\" class=\"img-thumb\" /></div>", "DanhGia": NaN, "KeHoach": NaN, "TrangThai": "Đang theo dõi", "GhiChu": NaN, "TonDong": "x", "Tuan": 45}, {"STT": 9, "KhuVuc": "Nhà máy keo", "ThietBi": "Đường ống xả team", "TinhTrang": "Bị mụt đường ống", "ThoiGian": "9/26/2025", "HinhAnh": "<div style=\"text-align:center;\"><img src=\"https://drive.google.com/thumbnail?id=1RtgAxKmj8XF-PHAE3Xrv2SZF5RF2eR3w&sz=w1000\" class=\"img-thumb\" /></div>", "DanhGia": "Lên kế hoạch kiểm tra", "KeHoach": NaN, "TrangThai": "Đang theo dõi", "GhiChu": NaN, "TonDong": "x", "Tuan": 45}, {"STT": 10, "KhuVuc": "Press", "ThietBi": "cƯA BIÊN", "TinhTrang": "CẮT KHÔNG ĐẠT", "ThoiGian": "5/10/2025", "HinhAnh": "", "DanhGia": "THAY THẾ LƯỠI CƯA DỰ PHÒNG", "KeHoach": NaN, "TrangThai": "Hoàn thành", "GhiChu": NaN, "TonDong": "", "Tuan": 46}, {"STT": 11, "KhuVuc": "Woodroom", "ThietBi": "BĂNG TẢI 1215", "TinhTrang": "CON LĂN HƯ VÒNG BI", "ThoiGian": "6/10/2025", "HinhAnh": "", "DanhGia": "THAY THẾ VÒNG BI", "KeHoach": NaN, "TrangThai": "Hoàn thành", "GhiChu": NaN, "TonDong": "", "Tuan": 46}, {"STT": 12, "KhuVuc": "Refiner", "ThietBi": "MỠ TRUNG TÂM", "TinhTrang": "HẾT THÙNG MỠ", "ThoiGian": "6/10/2025", "HinhAnh": "", "DanhGia": "THAY THẾ THÙNG MỠ MỚI", "KeHoach": NaN, "TrangThai": "Hoàn thành", "GhiChu": NaN, "TonDong": "", "Tuan": 46}, {"STT": 13, "KhuVuc": "Phụ trợ", "ThietBi": "ĐƯỜNG ỐNG CHỮA CHÁY", "TinhTrang": "BỊ MÒN THỦNG", "ThoiGian": "6/10/2025", "HinhAnh": "", "DanhGia": "GIA CÔNG CÙM GIA CỐ", "KeHoach": NaN, "TrangThai": "Hoàn thành", "GhiChu": NaN, "TonDong": "", "Tuan": 46}, {"STT": 14, "KhuVuc": "Energy Plant", "ThietBi": "TANK DẦU STEPGATE", "TinhTrang": "THIẾU DẦU", "ThoiGian": "6/10/2025", "HinhAnh": "", "DanhGia": "CHÂM BỔ SUNG 30lit", "KeHoach": NaN, "TrangThai": "Hoàn thành", "GhiChu": NaN, "TonDong": "", "Tuan": 46}, {"STT": 15, "KhuVuc": "Energy Plant", "ThietBi": "TANK DẦU MOVING FOOL", "TinhTrang": "THIẾU DẦU", "ThoiGian": "6/10/2025", "HinhAnh": "", "DanhGia": "CHÂM BỔ SUNG 60lit ", "KeHoach": NaN, "TrangThai": "Hoàn thành", "GhiChu": NaN, "TonDong": "", "Tuan": 46}, {"STT": 16, "KhuVuc": "Refiner", "ThietBi": "SABI", "TinhTrang": "BỊ RÒ RỈ DẦU HỘP SỐ", "ThoiGian": "10/10/2025", "HinhAnh": "", "DanhGia": "LẮP LÊN DỰ PHÒNG", "KeHoach": NaN, "TrangThai": "Hoàn thành", "GhiChu": NaN, "TonDong": "", "Tuan": 46}, {"STT": 17, "KhuVuc": "Woodroom", "ThietBi": "TRỐNG BÓC VỎ", "TinhTrang": "VÁCH BỊ BUNG", "ThoiGian": "9/10/2025", "HinhAnh": "", "DanhGia": "HÀN GIA CỐ VÁCH", "KeHoach": NaN, "TrangThai": "Hoàn thành", "GhiChu": NaN, "TonDong": "", "Tuan": 46}, {"STT": 18, "KhuVuc": "Woodroom", "ThietBi": "BĂNG TẢI 1256", "TinhTrang": "CON LĂN DÀI HƯ HỎNG", "ThoiGian": "10/10/2025", "HinhAnh": "", "DanhGia": "THAY THẾ CON LĂN DỰ PHÒNG", "KeHoach": NaN, "TrangThai": "Hoàn thành", "GhiChu": NaN, "TonDong": "", "Tuan": 46}, {"STT": 19, "KhuVuc": "Woodroom", "ThietBi": "BĂNG TẢI 1941", "TinhTrang": "CON LĂN DÀI HƯ HỎNG", "ThoiGian": "10/10/2025", "HinhAnh": "", "DanhGia": "THAY THẾ CON LĂN DỰ PHÒNG", "KeHoach": NaN, "TrangThai": "Hoàn thành", "GhiChu": NaN, "TonDong": "", "Tuan": 46}, {"STT": 20, "KhuVuc": "Woodroom", "ThietBi": "DAO LÓT", "TinhTrang": "BỊ GÃY BULONG", "ThoiGian": "10/10/2025", "HinhAnh": "", "DanhGia": "XỬ LÍ BULONG GÃY", "KeHoach": NaN, "TrangThai": "Hoàn thành", "GhiChu": NaN, "TonDong": "", "Tuan": 46}, {"STT": 21, "KhuVuc": "Woodroom", "ThietBi": "XÍCH 101", "TinhTrang": "XÍCH KÉO CHỦ ĐỘNG BỊ ĐỨT", "ThoiGian": "11/10/2025", "HinhAnh": "", "DanhGia": "NỐI LẠI XÍCH CHỦ ĐỘNG", "KeHoach": NaN, "TrangThai": "Hoàn thành", "GhiChu": NaN, "TonDong": "", "Tuan": 46}];
+
+/* Helper: build unique weeks and populate select */
+(function populateWeeks(){
+  try {
+    const sel = document.getElementById('weekSelect');
+    const weeks = Array.from(new Set(dfE_all.map(r=>String(r.Tuan)).concat(dfM_all.map(r=>String(r.Tuan))).filter(x=>x && x!=='nan')));
+    weeks.sort((a,b)=> (isNaN(a)?a:parseFloat(a)) - (isNaN(b)?b:parseFloat(b)));
+    weeks.forEach(w=>{
+      const o = document.createElement('option');
+      o.value = w; o.text = w; sel.appendChild(o);
+    });
+  } catch(e){ console.warn('populateWeeks failed', e); }
+})();
+
+/* When week changes */
+function onWeekChange(){
+  const w = document.getElementById('weekSelect').value;
+  const dfE = (w==='ALL') ? dfE_all : dfE_all.filter(r=>String(r.Tuan) === String(w));
+  const dfM = (w==='ALL') ? dfM_all : dfM_all.filter(r=>String(r.Tuan) === String(w));
+  updateKPI('e', dfE);
+  updateKPI('m', dfM);
+  updateIssue('e', dfE);
+  updateIssue('m', dfM);
+  updateCharts(dfE, 'pie_e_div', 'bar_e_div');
+  updateCharts(dfM, 'pie_m_div', 'bar_m_div');
+  // 🔽 Cập nhật bảng dữ liệu ở tab Electrical / Mechanical
+  updateCharts(dfE, 'pie_e_div', 'bar_e_div');
+  updateCharts(dfM, 'pie_m_div', 'bar_m_div');
+  updateDataTables(dfE, dfM); // ✅ gọi vẽ lại bảng dữ liệu
+}
+
+/* Update KPI table (replace tbody content) */
+function updateKPI(type, rows){
+  const id = type==='e' ? 'kpi_e_table' : 'kpi_m_table';
+  const tbody = document.querySelector(`#${id} tbody`);
+  if(!tbody) return;
+
+  // Danh sách trạng thái cố định (bỏ "Không rõ")
+  const allStatuses = ['Hoàn thành','Đang theo dõi','Đang thực hiện','Chưa hoàn thành'];
+
+  // Đếm số lượng
+  const map = {};
+  rows.forEach(r=>{
+    const s = r.TrangThai ? r.TrangThai.trim() : '';
+    if (!s) return; // bỏ qua dòng không có trạng thái
+    map[s] = (map[s] || 0) + 1;
+  });
+  const total = rows.length;
+
+  // Dựng bảng luôn đủ các trạng thái
+  let html = '';
+  allStatuses.forEach(k=>{
+    const v = map[k] || 0;
+    const pct = total>0 ? (v/total*100).toFixed(1) : 0;
+    html += `<tr><td>${k}</td><td>${v}</td><td>${pct}%</td></tr>`;
+  });
+
+  html += `<tr><td><b>Tổng</b></td><td colspan="2"><b>${total}</b></td></tr>`;
+  tbody.innerHTML = html;
+}
+
+/* Update Issue summary */
+function updateIssue(type, rows){
+  const id = type==='e' ? 'issue_e' : 'issue_m';
+  const el = document.getElementById(id);
+  if(!el) return;
+
+  // Lấy danh sách tất cả khu vực có thể có trong toàn bộ dữ liệu
+  const allRows = (type==='e') ? dfE_all : dfM_all;
+  const allAreas = Array.from(new Set(allRows.map(r => r.KhuVuc || ''))).filter(a=>a!=='');
+  allAreas.sort();
+
+  // Gom dữ liệu theo khu vực hiện tại
+  const area = {};
+  rows.forEach(r=>{
+    const kv = r.KhuVuc || '';
+    const td = (String(r.TonDong||'')).toLowerCase().includes('x') ? 1 : 0;
+    if(!area[kv]) area[kv] = {sol:0, ton:0};
+    area[kv].sol++;
+    area[kv].ton += td;
+  });
+
+  // Sinh bảng với giá trị 0 cho khu vực không có issue
+  let html = "<table class='summary-table'><tr><th>Khu vực</th><th>Số lượng</th><th>Tồn đọng</th></tr>";
+  allAreas.forEach(k=>{
+    const v = area[k] || {sol:0, ton:0};
+    const tdcolor = v.ton>0 ? " style='color:red;font-weight:600;'" : "";
+    html += `<tr><td>${k}</td><td>${v.sol}</td><td${tdcolor}>${v.ton}</td></tr>`;
+  });
+  const totalSol = allAreas.reduce((s,k)=>s+(area[k]?.sol||0),0);
+  const totalTon = allAreas.reduce((s,k)=>s+(area[k]?.ton||0),0);
+  html += `<tr><td><b>Tổng</b></td><td><b>${totalSol}</b></td><td><b style='color:red'>${totalTon}</b></td></tr></table>`;
+  el.innerHTML = html;
+}
+
+/* Draw/Update charts from rows (simple agg) */
+function updateCharts(rows, pieDivId, barDivId){
+  try {
+    // --- aggregate theo KhuVuc cho bar chart ---
+    const agg = {};
+    rows.forEach(r=>{
+      const k = r.KhuVuc || 'Unknown';
+      if(!agg[k]) agg[k] = { sol:0, ton:0 };
+      agg[k].sol++;
+      if(String(r.TonDong||'').toLowerCase().includes('x')) agg[k].ton++;
+    });
+
+    let labels = Object.keys(agg);
+    let sol = labels.map(k => agg[k].sol);
+    let ton = labels.map(k => agg[k].ton);
+
+    // Nếu không có dữ liệu, tạo 1 placeholder để tránh lỗi Plotly
+    if(labels.length === 0){
+      labels = ['-'];
+      sol = [0];
+      ton = [0];
+    }
+
+    // --- Bar chart (2 traces, group) ---
+    const barTraces = [
+      {
+        x: sol,
+        y: labels,
+        name: 'Số lượng',
+        type: 'bar',
+        orientation: 'h',
+        marker: { color: '#4A90E2' },
+        text: sol.map(v => (v === 0 ? '' : v.toString())),
+        textposition: 'outside',
+        textfont: { size: 11, color: 'black' }, // chữ nhỏ hơn
+        cliponaxis: false
+      },
+      {
+        x: ton,
+        y: labels,
+        name: 'Tồn đọng',
+        type: 'bar',
+        orientation: 'h',
+        marker: { color: '#D9534F' },
+        text: ton.map(v => (v === 0 ? '' : v.toString())),
+        textposition: 'outside',
+        textfont: { size: 11, color: 'black' },
+        cliponaxis: false
+      }
+    ];
+
+    // Tính max safe để thêm khoảng trống bên phải (tránh cắt nhãn)
+    const maxVal = Math.max(...(sol.length?sol:[0]), ...(ton.length?ton:[0]), 5);
+    const barLayout = {
+  barmode: 'group',
+  height: 240,
+  width: 380,
+  autosize: false,
+  margin: { t: 20, b: 30, l: 120, r: 70 },
+  legend: { orientation: 'h', y: -0.25 },
+  xaxis: {
+    automargin: false,
+    range: [0, maxVal * 1.2],
+    showticklabels: false, // ẩn nhãn trục
+    showgrid: false,       // ẩn lưới chia cột
+    zeroline: false        // ẩn đường 0
+  },
+  yaxis: { automargin: false, tickfont: { size: 11 } },
+  bargap: 0.35,
+  uniformtext: { mode: 'show', minsize: 11 }
+};
+
+    // Vẽ bar chart (với displayModeBar tắt)
+    Plotly.react(barDivId, barTraces, barLayout, {displayModeBar:false});
+
+    // --- Pie: aggregate theo TrangThai ---
+    const statusAgg = {};
+    rows.forEach(r=>{
+      const st = (r.TrangThai || 'Không rõ').toString();
+      statusAgg[st] = (statusAgg[st] || 0) + 1;
+    });
+
+    const preferred = ['Hoàn thành','Đang theo dõi','Đang thực hiện','Chưa hoàn thành','Không rõ'];
+    const pieLabels = [];
+    const pieValues = [];
+    const pieColors = [];
+
+    const colorMap = {
+      'Hoàn thành': '#4CAF50',
+      'Đang theo dõi': '#F5C242',
+      'Đang thực hiện': '#4A90E2',
+      'Chưa hoàn thành': '#D9534F',
+      'Không rõ': '#95A5A6'
+    };
+
+    preferred.forEach(k=>{
+      if(statusAgg[k]){
+        pieLabels.push(k);
+        pieValues.push(statusAgg[k]);
+        pieColors.push(colorMap[k]||'#95A5A6');
+        delete statusAgg[k];
+      }
+    });
+    Object.keys(statusAgg).forEach(k=>{
+      pieLabels.push(k);
+      pieValues.push(statusAgg[k]);
+      pieColors.push(colorMap[k]||'#95A5A6');
+    });
+
+    const pieTrace = [{
+      labels: pieLabels,
+      values: pieValues,
+      type: 'pie',
+      hole: 0.4,
+      textinfo: 'percent',
+      textposition: 'outside',
+      marker: { colors: pieColors, line: { color: '#fff', width: 1 } },
+      hoverinfo: 'label+value+percent'
+    }];
+
+    const pieLayout = {
+      height: 220,
+      width: 280,
+      autosize: false,
+      margin: { t: 30, b: 30, l: 30, r: 30 },
+      showlegend: true,
+      legend: {
+        orientation: 'h',
+        x: 0.5,
+        xanchor: 'center',
+        y: -0.25
+      }
+    };
+
+    Plotly.react(pieDivId, pieTrace, pieLayout, {displayModeBar:false});
+  } catch(e){
+    console.warn('updateCharts failed', e);
+  }
+}
+
+/* Lọc dữ liệu trong bảng Electrical & Mechanical theo tuần */
+function filterDataTables(selectedWeek){
+  ['electrical','mechanical'].forEach(tab => {
+    const wrapper = document.querySelector(`#${tab} .table-wrapper`);
+    if (!wrapper) return;
+
+    const table = wrapper.querySelector('table');
+    if (!table) return;
+
+    const rows = table.querySelectorAll('tbody tr');
+    rows.forEach(r => {
+      if (selectedWeek === 'ALL') {
+        r.style.display = ''; // hiện lại toàn bộ
+        return;
+      }
+      const cells = Array.from(r.querySelectorAll('td'));
+      // tìm cột nào có chữ “Tuần” hoặc giá trị chứa số tuần được chọn
+      const matchWeek = cells.some(td => {
+        const text = td.innerText.trim().toLowerCase();
+        return text.includes(selectedWeek.toLowerCase()) ||
+               text.includes('tuần ' + selectedWeek) ||
+               text.includes('w' + selectedWeek);
+      });
+      r.style.display = matchWeek ? '' : 'none';
+    });
+  });
+}
+
+// Cập nhật 2 bảng dữ liệu Electrical & Mechanical
+function updateDataTables(dfE, dfM) {
+  renderTable('electricalTable', dfE);
+  renderTable('mechanicalTable', dfM);
+}
+
+// Hàm render bảng dùng lại code hiện có
+function renderTable(containerId, data) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  if (!data || data.length === 0) {
+    container.innerHTML = '<p style="text-align:center;color:#999;">Không có dữ liệu cho tuần này</p>';
+    return;
+  }
+
+  // Ánh xạ header sang tiếng Việt
+  const colDisplayMap = {
+    'STT': 'STT',
+    'KhuVuc': 'Khu vực',
+    'ThietBi': 'Thiết bị',
+    'TinhTrang': 'Tình trạng',
+    'ThoiGian': 'Thời gian',
+    'HinhAnh': 'Hình ảnh',
+    'DanhGia': 'Đánh giá',
+    'KeHoach': 'Kế hoạch',
+    'TrangThai': 'Trạng thái',
+    'GhiChu': 'Ghi chú',
+    'TonDong': 'Tồn đọng',
+    'Tuan': 'Tuần'
+  };
+
+  // Chỉ giữ cột cần thiết + loại bỏ TonDongFlag
+  const cols = Object.keys(data[0]).filter(c => c in colDisplayMap);
+
+  let html = '<div class="table-wrapper"><table class="table table-sm table-bordered align-middle"><thead><tr>';
+  html += cols.map(c => `<th>${colDisplayMap[c]}</th>`).join('');
+  html += '</tr></thead><tbody>';
+
+  html += data.map(row => {
+    let rowHTML = '<tr>';
+    cols.forEach(c => {
+      let cell = row[c] ?? '';
+
+      // Nếu là HTML ảnh thì render thẳng và căn giữa
+      if (typeof cell === 'string' && cell.toLowerCase().includes('<img')) {
+        rowHTML += `<td style="text-align:center;">${cell}</td>`;
+      } else {
+        rowHTML += `<td>${cell}</td>`;
+      }
+    });
+    rowHTML += '</tr>';
+    return rowHTML;
+  }).join('');
+
+  html += '</tbody></table></div>';
+  container.innerHTML = html;
+}
+
+/* init: run once to populate dashboard with ALL */
+document.addEventListener('DOMContentLoaded', function(){
+  onWeekChange();
+});
+
+/* Tab switch */
+function showTab(id, btn){
+  ['dashboard','electrical','mechanical'].forEach(x=>document.getElementById(x).style.display=(x===id)?'block':'none');
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+}
+</script>
+
+</body>
+</html>
